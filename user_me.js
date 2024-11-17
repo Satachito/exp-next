@@ -4,6 +4,10 @@ dotenv.config( { path: '../.env' } )
 console.log( 'client_id:'		, process.env.CLIENT_ID		)
 console.log( 'client_secret:'	, process.env.CLIENT_SECRET	)
 
+
+
+
+
 const express		= require( 'express');
 const crypto		= require( 'crypto');
 const querystring	= require( 'querystring');
@@ -64,8 +68,8 @@ app.get(
 			)
 		,	{	method	: 'POST'
 			,	headers: {
-					'Content-Type'	: 'application/x-www-form-urlencoded'
-				,	'Authorization'	: 'Basic ' + Basic()
+					'Content-Type'		: 'application/x-www-form-urlencoded'
+				,	'Authorization'		: 'Basic ' + Basic()
 				}
 			}
 		).then(
@@ -74,26 +78,35 @@ app.get(
 			_ => (
 				access_token = _.access_token
 			,	console.log( `Access Token: ${access_token}` )
-			,	s.redirect( '/tweets' )
+			,	s.redirect( '/me' )
 			)
 		)
 	:	s.status( 500 ).send( STATE )	//	直接来るの防止
 )
 
 app.get(
-	'/tweets'
+	'/me'
 ,	( q, s ) => fetch(
-		'https://api.twitter.com/2/user/me'
-	,	{ headers: { 'Authorization': 'OAuth ' + access_token } }
+		'https://api.twitter.com/2/users/me'
+	,	{	headers: {
+				'Authorization'		: 'Bearer ' + access_token
+			,	'accept'			: '*/*'
+			,	'User-Agent'		: `node-fetch/${require('node-fetch/package.json').version}`
+			,	'Accept-Encoding'	: 'gzip,deflate'
+			}
+		}
 	).then(
-		_ => _.text()
+		_ => {
+			if ( !_.ok ) throw _
+			_.text()
+		}
 	).then(
 		console.log
 	).catch(
-		er => console.error( er )
+		_ => s.status( _.status ).send( _.statusText )
 	)
 )
-		
+
 const HOME = process.env[ "HOME" ]
 const fs = require('fs');
 
