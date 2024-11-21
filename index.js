@@ -1,3 +1,6 @@
+console.log( 'client_id:'		, process.env.CLIENT_ID		)
+console.log( 'client_secret:'	, process.env.CLIENT_SECRET	)
+
 const express			= require( 'express' )
 const { Client, auth }	= require( 'twitter-api-sdk' )
 const { v4: uuidv4 }	= require(　'uuid'　);
