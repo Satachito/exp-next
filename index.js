@@ -24,11 +24,11 @@ const send403 = (s, why) => {
     console.error(403, why);
 };
 
-app.get('/', (q, s) => s.send('<a href="/twitter">login</a>'));
+app.get('/', (q, s) => s.send('<a href="/twitter?page=/me">login</a>'));
 
 app.get('/twitter', (q, s) => {
     const { page } = q.query;
-    if (!page) return send403(s, '/login page');
+    if (!page) return send403(s, '/twitter page');
 
     const authClient = new auth.OAuth2User({
         client_id: process.env.CLIENT_ID,
