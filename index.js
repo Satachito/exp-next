@@ -37,7 +37,12 @@ send403 = ( s, why ) => (
 )
 
 app.get(
-	'/login'
+	'/'
+,	( q, s ) => s.send( '<a href='/'>login</a>' )
+)
+
+app.get(
+	'/twitter'
 ,	( q, s ) => {
 
 		const
@@ -111,3 +116,7 @@ app.get(
 		)
 	}
 )
+
+module.exports = {
+	handler: app
+};
