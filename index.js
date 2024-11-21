@@ -1,13 +1,13 @@
-const express			= require( 'express' )
-const { Client, auth }	= require( 'twitter-api-sdk' )
+const express			= require( 'express' );
+const { Client, auth }	= require( 'twitter-api-sdk' );
 const { v4: uuidv4 }	= require(　'uuid'　);
 
 const
-app = express()
+app = express();
 
 const
 contextDict = {
-}
+};
 const
 Register = _ => {
 	//	ログを出す
@@ -25,18 +25,18 @@ Register = _ => {
 	)
 
 	return key
-}
+};
 
 const
 send403 = ( s, why ) => (
 	s.status( 403 ).send( 'FORBIDDEN' )
 ,	console.error( 403, why )
-)
+);
 
 app.get(
 	'/'
 ,	( q, s ) => s.send( '<a href='/'>login</a>' )
-)
+);
 
 app.get(
 	'/twitter'
@@ -63,7 +63,7 @@ app.get(
 			)
 		)
 	}
-)
+);
 
 app.get(
 	'/XCB'
@@ -89,7 +89,7 @@ app.get(
 			)
 		)
 	}
-)
+);
 
 app.get(
 	'/me'
@@ -112,7 +112,7 @@ app.get(
 			er => s.status( 500 ).send( er )
 		)
 	}
-)
+);
 
 exports.handler = app;
 
