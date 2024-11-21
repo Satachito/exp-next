@@ -1,3 +1,11 @@
+const dotenv = require( 'dotenv' )
+dotenv.config( { path: '../.env' } )
+console.log( 'client_id:'		, process.env.CLIENT_ID		)
+console.log( 'client_secret:'	, process.env.CLIENT_SECRET	)
+
+
+
+
 const express			= require( 'express' )
 const { Client, auth }	= require( 'twitter-api-sdk' )
 const { v4: uuidv4 }	= require(　'uuid'　);
@@ -108,3 +116,18 @@ app.get(
 		)
 	}
 )
+
+
+const HOME	= process.env[ 'HOME' ]
+const fs	= require( 'fs' )
+
+require( 'https' ).createServer(
+	{	key	: fs.readFileSync( HOME + '/cert/localhost+2-key.pem'	)
+	,	cert: fs.readFileSync( HOME + '/cert/localhost+2.pem'		)
+	}
+,	app
+).listen(
+	8080
+,	() => console.log( 'Go here to login: https://localhost:8080/login' )
+)
+
