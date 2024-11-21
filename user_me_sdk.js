@@ -84,7 +84,7 @@ app.get(
 		{ page, authClient } = session
 
 		authClient.requestAccessToken( code ).then(
-			() => s.redirect( `${page}?${new URLSearchParamsstate({state})}` )
+			() => s.redirect( `${page}?state=${state}` )
 		).catch(
 			er => (
 				console.error( er )
