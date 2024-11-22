@@ -24,7 +24,14 @@ const send403 = (s, why) => {
     console.error(403, why);
 };
 
-app.get('/', (q, s) => s.send('<a href="/twitter?page=/me">login</a>'));
+app.get(
+	'/'
+,	(q, s) => s.send(
+	`	<a href="/twitter?page=/me">login</a>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	`
+	)
+);
 
 app.get('/twitter', (q, s) => {
     const { page } = q.query;
