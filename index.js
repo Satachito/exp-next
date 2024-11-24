@@ -41,7 +41,7 @@ app.get(
 
 app.get('/twitter', (q, s) => {
 
-	s.set('Content-Security-Policy', "default-src 'none'; script-src 'self' https://vercel.live; connect-src 'self'; style-src 'self';");
+	s.set('Content-Security-Policy', "default-src 'self' https://vercel.live; script-src 'self' https://vercel.live; connect-src 'self'; style-src 'self';");
 
 	const { page } = q.query;
     if (!page) return send403(s, '/twitter page');
