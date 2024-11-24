@@ -27,11 +27,14 @@ const send403 = (s, why) => {
 app.get(
 	'/'
 ,	(q, s) => s.send(
-	`	<a href="/twitter?page=/alert">alert</a>
+	`	<head><meta http-equiv="Content-Security-Policy" content="script-src 'self' https://vercel.live;"></head>
+		<body>
+		<a href="/twitter?page=/alert">alert</a>
 		<br>
 		<a href="/twitter?page=/api">use API</a>
 		<br>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		</body>
 	`
 	)
 );
