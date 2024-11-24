@@ -74,6 +74,7 @@ app.get(
 		const { state, code } = q.query
 		if ( !state || !code ) return send403( s, '/XCB state or code' )
 console.log( '/XCB', state )
+console.log( 'session', q.session )
 console.log( 'session.state', q.session.state )
 console.log( 'session.codeVerifier', q.session.codeVerifier )
 
