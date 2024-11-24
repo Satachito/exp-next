@@ -42,6 +42,8 @@ app.get(
 app.get('/twitter', (q, s) => {
     const { page } = q.query;
     if (!page) return send403(s, '/twitter page');
+    
+	s.set('Content-Security-Policy', "script-src 'self' https://vercel.live;");
 
     const user = new auth.OAuth2User({
         client_id: process.env.CLIENT_ID,
