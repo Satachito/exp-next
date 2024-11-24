@@ -1,3 +1,10 @@
+const dotenv = require( 'dotenv' )
+dotenv.config( { path: '../.env' } )
+console.log( 'client_id:'		, process.env.CLIENT_ID		)
+console.log( 'client_secret:'	, process.env.CLIENT_SECRET	)
+
+
+
 const express = require('express');
 const { Client, auth } = require('twitter-api-sdk');
 const { v4: uuidv4 } = require('uuid');
@@ -28,9 +35,8 @@ app.get(
 	'/'
 ,	(q, s) => s.send(
 	`	<a href="/twitter?page=/alert">alert</a>
-		<br>
+		<a href="/twitter?page=/X">to X</a>
 		<a href="/twitter?page=/api">use API</a>
-		<br>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	`
 	)
@@ -40,22 +46,20 @@ app.get('/twitter', (q, s) => {
     const { page } = q.query;
     if (!page) return send403(s, '/twitter page');
 
-    const user = new auth.OAuth2User({
+    const authClient = new auth.OAuth2User({
         client_id: process.env.CLIENT_ID,
         client_secret: process.env.CLIENT_SECRET,
-        callback: `${process.env.HOST}/XCB`,
+        callback: 'https://localhost:8080/XCB',
         scopes: ['tweet.read', 'users.read'],
     });
 
     s.redirect(
-        user.generateAuthURL({
+        authClient.generateAuthURL({
             state: Register({ page, authClient }),
             code_challenge_method: 's256',
         })
     );
 });
-
-
 
 app.get(
 	'/XCB'
@@ -63,11 +67,8 @@ app.get(
 		const { state, code } = q.query;
 		if (!state || !code) return send403(s, '/XCB state or code');
 
-		console.log( 'state:', state )
-		console.log( 'code', code )
-
 		const session = contextDict[state];
-		if (!session) return send403(s, '/XCB session for key: ' + state );
+		if (!session) return send403(s, '/XCB session key:' + state);
 
 		const { page, authClient } = session;
 
@@ -75,13 +76,16 @@ app.get(
 		case 'alert':
 			alert( 'X にログインしました' )
 			break
+		case 'X':
+			location.href = 'https://www.x.com'
+			break
 		case 'api':
 			authClient.requestAccessToken( code ).then(
 				() => s.redirect(`${page}?state=${state}`)
 			).catch(
 				er => (
 					console.error( er )
-				,	s.status(500).send( 'Failed to get token for code:', code )
+				,	s.status(500).send( 'Failed to get token' )
 				)
 			)
 			break
@@ -107,5 +111,19 @@ app.get(
 	}
 )
 
-module.exports = app;
+
+
+
+const HOME	= process.env[ 'HOME' ]
+const fs	= require( 'fs' )
+
+require( 'https' ).createServer(
+	{	key	: fs.readFileSync( HOME + '/cert/localhost+2-key.pem'	)
+	,	cert: fs.readFileSync( HOME + '/cert/localhost+2.pem'		)
+	}
+,	app
+).listen(
+	8080
+,	() => console.log( 'Go to https://localhost:8080' )
+)
 
