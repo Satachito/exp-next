@@ -27,7 +27,7 @@ const send403 = (s, why) => {
 app.get(
 	'/'
 ,	(q, s) => s.send(
-	`	<head><meta http-equiv="Content-Security-Policy" content="script-src 'self' https://vercel.live;"></head>
+	`	<head><meta http-equiv="Content-Security-Policy', "default-src 'none'; script-src 'self' https://vercel.live; connect-src 'self'; style-src 'self';"></head>
 		<body>
 		<a href="/twitter?page=/alert">alert</a>
 		<br>
