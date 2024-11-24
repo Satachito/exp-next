@@ -34,6 +34,7 @@ app.get(
 )
 
 ////////
+console.log( 'HOST:', process.env.HOST )
 const
 USER = new auth.OAuth2User(
 	{   client_id       : process.env.CLIENT_ID
