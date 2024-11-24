@@ -52,7 +52,7 @@ app.get('/twitter', (q, s) => {
 
     s.redirect(
         user.generateAuthURL({
-            state: Register({ page, authClient }),
+            state: Register({ page, user }),
             code_challenge_method: 's256',
         })
     );
