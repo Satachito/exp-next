@@ -5,111 +5,116 @@ console.log( 'client_secret:'	, process.env.CLIENT_SECRET	)
 
 
 
-const express = require('express');
-const { Client, auth } = require('twitter-api-sdk');
-const { v4: uuidv4 } = require('uuid');
 
-const app = express();
 
-const contextDict = {};
-const Register = (_) => {
-    const key = uuidv4();
-    contextDict[key] = _;
-    setTimeout(
-        () => {
-            delete contextDict[key];
-            console.log(`Session expired and removed: ${key}`);
-        },
-        10 * 60 * 1000
-    );
 
-    return key;
-};
 
-const send403 = (s, why) => {
-    s.status(403).send('FORBIDDEN');
-    console.error(403, why);
-};
+
+
+
+const { Client, auth }  = require( 'twitter-api-sdk' )
+const { v4: uuidv4 }    = require( 'uuid' );
+
+const app = require( 'express' )()
+
+app.use(
+	require( 'express-session' ) (
+		{	secret: 'your-secret-key'
+		,	resave: false
+		,	saveUninitialized: true
+		,	cookie: { secure: true }
+		}
+	)
+)
+
+const
+send403 = ( s, why ) => (
+	s.status( 403 ).send( 'FORBIDDEN' )
+,	console.error(403, why)
+)
 
 app.get(
 	'/'
-,	(q, s) => s.send(
-	`	<a href="/twitter?page=/alert">alert</a>
-		<a href="/twitter?page=/X">to X</a>
+,	( q, s ) => s.send(
+	`	<body>
+		<a href="/twitter?page=/alert">alert</a>
+		<br>
 		<a href="/twitter?page=/api">use API</a>
+		<br>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		</body>
 	`
 	)
-);
+)
 
-app.get('/twitter', (q, s) => {
-    const { page } = q.query;
-    if (!page) return send403(s, '/twitter page');
+////////
+const
+USER = new auth.OAuth2User(
+	{   client_id       : process.env.CLIENT_ID
+	,   client_secret   : process.env.CLIENT_SECRET
+	,   callback        : 'https://localhost:8080/XCB'
+	,   scopes          : [ 'tweet.read', 'users.read' ]
+	}   
+)   
 
-    const authClient = new auth.OAuth2User({
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-        callback: 'https://localhost:8080/XCB',
-        scopes: ['tweet.read', 'users.read'],
-    });
+app.get(
+	'/twitter'
+,	( q, s ) => {
+		const
+		{ page } = q.query
+		if ( !page ) return send403( s, '/login page' )
 
-    s.redirect(
-        authClient.generateAuthURL({
-            state: Register({ page, authClient }),
-            code_challenge_method: 's256',
-        })
-    );
-});
+		const	state = uuidv4()
+		q.session.state = state
+		const	codeVerifier = uuidv4()
+		q.session.codeVerifier = codeVerifier
+
+console.log( '/twitter', state, codeVerifier )
+
+		s.redirect(
+			USER.generateAuthURL(
+				{   state
+				,   code_challenge_method   : 's256'
+				}   
+			)   
+		)   
+	}   
+)
 
 app.get(
 	'/XCB'
-,	( q, s ) => {
-		const { state, code } = q.query;
-		if (!state || !code) return send403(s, '/XCB state or code');
+,	async ( q, s ) => {
+		const { state, code } = q.query
+		if ( !state || !code ) return send403( s, '/XCB state or code' )
+console.log( '/XCB', state )
+console.log( 'session.state', q.session.state )
+console.log( 'session.codeVerifier', q.session.codeVerifier )
 
-		const session = contextDict[state];
-		if (!session) return send403(s, '/XCB session key:' + state);
+//		if ( state !== q.session.state ) return send403( s, 'State mismatch: ' + state + ':' + q.session.state )
 
-		const { page, authClient } = session;
-
-		switch ( page ) {
-		case 'alert':
-			alert( 'X にログインしました' )
-			break
-		case 'X':
-			location.href = 'https://www.x.com'
-			break
-		case 'api':
-			authClient.requestAccessToken( code ).then(
-				() => s.redirect(`${page}?state=${state}`)
+		USER.requestAccessToken( code ).then(
+			() => new Client( USER ).users.findMyUser().then(
+				(_) => s.send(_)
 			).catch(
-				er => (
-					console.error( er )
-				,	s.status(500).send( 'Failed to get token' )
-				)
+				er => s.status( 500 ).send( er )
 			)
-			break
-		}
+		).catch(
+			er => (
+				console.error( er )
+			,   s.status( 500 ).send( 'Failed to get token' )
+			)   
+		)   
 	}
 )
 
-app.get(
-	'/api'
-,	(q, s) => {
-		const { state } = q.query;
-		if (!state) return send403(s, '/api state');
 
-		const session = contextDict[state];
-		if (!session) return send403(s, '/api authClient');
 
-		const { authClient } = session;
 
-		new Client(authClient)
-			.users.findMyUser()
-			.then((_) => s.send(_))
-			.catch((er) => s.status(500).send(er));
-	}
-)
+
+
+
+
+
 
 
 

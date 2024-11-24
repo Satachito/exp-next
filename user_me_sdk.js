@@ -6,116 +6,135 @@ console.log( 'client_secret:'	, process.env.CLIENT_SECRET	)
 
 
 
-const express			= require( 'express' )
-const { Client, auth }	= require( 'twitter-api-sdk' )
-const { v4: uuidv4 }	= require(　'uuid'　);
 
-const
-app = express()
 
-const
-contextDict = {
-}
-const
-Register = _ => {
-	//	ログを出す
-	const
-	key = uuidv4()
-	contextDict[ key ] = _
-	setTimeout(
-		() => (
-			//	この時点でセッションが残っている人は多分離脱してる
-			//	ログを出す
-			delete contextDict[ key ]
-		,	console.log( `Session expired and removed: ${key}` )
-		)
-	,	10 * 60 * 1000
+
+
+
+
+const { Client, auth }  = require( 'twitter-api-sdk' )
+const { v4: uuidv4 }    = require( 'uuid' );
+
+const app = require( 'express' )()
+
+app.use(
+	require( 'express-session' ) (
+		{	secret: 'your-secret-key'
+		,	resave: false
+		,	saveUninitialized: true
+		,	cookie: { secure: true }
+		}
 	)
-
-	return key
-}
+)
 
 const
 send403 = ( s, why ) => (
 	s.status( 403 ).send( 'FORBIDDEN' )
-,	console.error( 403, why )
+,	console.error(403, why)
 )
 
 app.get(
-	'/login'
-,	( q, s ) => {
+	'/'
+,	( q, s ) => s.send(
+	`	<body>
+		<a href="/twitter?page=/alert">alert</a>
+		<br>
+		<a href="/twitter?page=/api">use API</a>
+		<br>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		</body>
+	`
+	)
+)
 
+////////
+
+let
+USER
+
+app.get(
+	'/twitter'
+,	( q, s ) => {
 		const
 		{ page } = q.query
 		if ( !page ) return send403( s, '/login page' )
 
+		USER = new auth.OAuth2User(
+			{   client_id       : process.env.CLIENT_ID
+			,   client_secret   : process.env.CLIENT_SECRET
+			,   callback        : 'https://localhost:8080/XCB'
+			,   scopes          : [ 'tweet.read', 'users.read' ]
+			}   
+		)   
+
 		const
-		authClient = new auth.OAuth2User(
-			{	client_id		: process.env.CLIENT_ID
-			,	client_secret	: process.env.CLIENT_SECRET
-			,	callback		: 'https://localhost:8080/XCB'
-			,	scopes			: [ 'tweet.read', 'users.read' ]
-			}
-		)
+		state = uuidv4()
+console.log( '/twitter', state )
 
 		s.redirect(
-			authClient.generateAuthURL(
-				{	state					: Register( { page, authClient } )
-				,	code_challenge_method	: 's256'
-				}
-			)
-		)
-	}
+			USER.generateAuthURL(
+				{   state
+				,   code_challenge_method   : 's256'
+				}   
+			)   
+		)   
+	}   
 )
 
 app.get(
 	'/XCB'
-,	( q, s ) => {
-
-		const
-		{ state, code } = q.query
+,	async ( q, s ) => {
+		const { state, code } = q.query
 		if ( !state || !code ) return send403( s, '/XCB state or code' )
+console.log( '/XCB', state )
 
-		const
-		session = contextDict[ state ]
-		if ( !session ) return send403( s, '/XCB session' )
-		
-		const
-		{ page, authClient } = session
+//		if ( state !== req.session.state ) return send403( s, 'State mismatch: ' + state + ':' + req.session.state )
 
-		authClient.requestAccessToken( code ).then(
-			() => s.redirect( `${page}?state=${state}` )
+		USER.requestAccessToken( code ).then(
+			() => new Client( USER ).users.findMyUser().then(
+				(_) => s.send(_)
+			).catch(
+				er => s.status( 500 ).send( er )
+			)
 		).catch(
 			er => (
 				console.error( er )
-			,	s.status( 500 ).send( 'Failed to get token' )
-			)
-		)
+			,   s.status( 500 ).send( 'Failed to get token' )
+			)   
+		)   
 	}
 )
 
+/*
 app.get(
-	'/me'
-,	( q, s ) => {
+	'/api'
+,	(q, s) => {
+		const { state } = q.query
+		if (!state) return send403(s, '/api state')
 
-		const
-		{ state } = q.query
-		if ( !state ) return send403( s, '/me state' )
+		const session = contextDict[state]
+		if (!session) return send403(s, '/api authClient')
 
-		const
-		session = contextDict[ state ]
-		if ( !session ) return send403( s, '/me authClient' )
+		const { authClient } = session
 
-		const
-		{ authClient } = session
-
-		new Client( authClient ).users.findMyUser().then(
-			_ => s.send( _ )
-		).catch(
-			er => s.status( 500 ).send( er )
-		)
+		new Client(authClient)
+			.users.findMyUser()
+			.then((_) => s.send(_))
+			.catch((er) => s.status(500).send(er))
 	}
 )
+*/
+
+
+
+
+
+
+
+
+
+
+
 
 
 const HOME	= process.env[ 'HOME' ]
@@ -128,6 +147,6 @@ require( 'https' ).createServer(
 ,	app
 ).listen(
 	8080
-,	() => console.log( 'Go here to login: https://localhost:8080/login' )
+,	() => console.log( 'Go to https://localhost:8080' )
 )
 
