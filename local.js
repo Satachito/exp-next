@@ -52,7 +52,7 @@ const
 USER = new auth.OAuth2User(
 	{   client_id       : process.env.CLIENT_ID
 	,   client_secret   : process.env.CLIENT_SECRET
-	,   callback        : 'https://localhost:8080/XCB'
+	,   callback        : process.env.HOST + '/XCB'
 	,   scopes          : [ 'tweet.read', 'users.read' ]
 	}   
 )   
