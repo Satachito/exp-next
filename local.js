@@ -39,25 +39,12 @@ app.get(
 )
 
 ////////
-const 
-crypto = require("crypto");
-
-const
-generate_SHA256_base64url_challenge = _ => crypto.createHash( 'sha256' ).update( _ ).digest( 'base64url' )
-
-const 
-verifyCodeChallenge = ( verifier, challenge ) => generate_SHA256_base64url_challenge( verifier ) === challenge
-
-const
-code_verifier = uuidv4()
-
 const
 USER = new auth.OAuth2User(
 	{   client_id       : process.env.CLIENT_ID
 	,   client_secret   : process.env.CLIENT_SECRET
 	,   callback        : process.env.HOST + '/XCB'
 	,   scopes          : [ 'tweet.read', 'users.read' ]
-	,	code_verifier
 	}   
 )   
 
@@ -71,7 +58,6 @@ app.get(
 			USER.generateAuthURL(
 				{   state					: uuidv4()
 				,   code_challenge_method   : 's256'
-				,	code_verifier
 				}   
 			)
 		)   
@@ -95,7 +81,7 @@ app.get(
 				console.error( er )
 			,   s.status( 500 ).send( 'Failed to get token' )
 			)
-		)   
+		)
 	}
 )
 

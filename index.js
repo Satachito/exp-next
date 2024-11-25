@@ -1,17 +1,13 @@
+
+
+
+
+
 const { Client, auth }  = require( 'twitter-api-sdk' )
 const { v4: uuidv4 }    = require( 'uuid' );
+const jwt				= require( 'jsonwebtoken' );
 
 const app = require( 'express' )()
-
-app.use(
-	require( 'express-session' ) (
-		{	secret: 'your-secret-key'
-		,	resave: false
-		,	saveUninitialized: true
-		,	cookie: { secure: true }
-		}
-	)
-)
 
 const
 send403 = ( s, why ) => (
@@ -34,7 +30,6 @@ app.get(
 )
 
 ////////
-console.log( 'HOST:', process.env.HOST )
 const
 USER = new auth.OAuth2User(
 	{   client_id       : process.env.CLIENT_ID
@@ -50,20 +45,12 @@ app.get(
 		const
 		{ page } = q.query
 		if ( !page ) return send403( s, '/login page' )
-
-		const	state = uuidv4()
-		q.session.state = state
-		const	codeVerifier = uuidv4()
-		q.session.codeVerifier = codeVerifier
-
-console.log( '/twitter', state, codeVerifier )
-
 		s.redirect(
 			USER.generateAuthURL(
-				{   state
+				{   state					: uuidv4()
 				,   code_challenge_method   : 's256'
 				}   
-			)   
+			)
 		)   
 	}   
 )
@@ -73,12 +60,6 @@ app.get(
 ,	async ( q, s ) => {
 		const { state, code } = q.query
 		if ( !state || !code ) return send403( s, '/XCB state or code' )
-console.log( '/XCB', state )
-console.log( 'session', q.session )
-console.log( 'session.state', q.session.state )
-console.log( 'session.codeVerifier', q.session.codeVerifier )
-
-//		if ( state !== q.session.state ) return send403( s, 'State mismatch: ' + state + ':' + q.session.state )
 
 		USER.requestAccessToken( code ).then(
 			() => new Client( USER ).users.findMyUser().then(
@@ -90,10 +71,17 @@ console.log( 'session.codeVerifier', q.session.codeVerifier )
 			er => (
 				console.error( er )
 			,   s.status( 500 ).send( 'Failed to get token' )
-			)   
-		)   
+			)
+		)
 	}
 )
+
+
+
+
+
+
+
 
 
 
